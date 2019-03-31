@@ -4,18 +4,22 @@ var express = require("express");
 var auth = require("./authentication");
 var bodyParser = require("body-parser");
 var bcrypt = require("bcrypt");
+var cors = require('cors')
+
 var UserModel = require("./user");
 
 require("./database");
 
 var app = express();
 var port = process.env.API_SERVER_PORT;
+var uiServerURI = process.env.UI_SERVER_URI;
 
 app.use(bodyParser.urlencoded({
     extended: true
 }));
 app.use(bodyParser.json());
 
+app.use(cors({ origin: uiServerURI, methods: 'POST', allowedHeaders: 'Origin, X-Requested-With, Content-Type, Accept' }))
 
 app.post("/login", function(req, res) {
     var userObj = req.body;
@@ -24,7 +28,10 @@ app.post("/login", function(req, res) {
         bcrypt.compare(userObj.password, doc[0].password).then(function(match) {
             if (match) {
                 var token = auth.createJwt(userObj.email);
-                res.status(200).send(token);
+
+                userObj['id'] = doc[0].id;
+                userObj['token'] = token;
+                res.status(200).send(userObj);
             } else {
                 res.status(401).send("Password doesn't match");
             }
@@ -45,7 +52,10 @@ app.post("/register", function(req, res) {
 
         user.save().then(function(doc) {
             var token = auth.createJwt(userObj.email);
-            res.status(200).send(token);
+
+            userObj['id'] = doc[0].id;
+            userObj['token'] = token;
+            res.status(200).send(userObj);
         }).catch(function(err) {
             res.status(500).send("User Not Saved!");
         });
@@ -57,7 +67,7 @@ app.post("/getUsers", auth.verifyToken, function(req, res, next) {
 
     UserModel.find({ }).then(function(doc) {
         var userArray = doc.map(function(x) {
-            return { _id: x._id, email: x.email }
+            return { id: x.id, email: x.email }
         });
         res.status(200).send(userArray);
     }).catch(function(err) {
