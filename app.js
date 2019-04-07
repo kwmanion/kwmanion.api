@@ -19,7 +19,7 @@ app.use(bodyParser.urlencoded({
 }));
 app.use(bodyParser.json());
 
-app.use(cors({ origin: uiServerURI, methods: 'POST', allowedHeaders: 'Origin, X-Requested-With, Content-Type, Accept' }))
+app.use(cors({ origin: uiServerURI, methods: 'POST', allowedHeaders: 'Origin, X-Requested-With, Content-Type, Accept, Authorization' }))
 
 app.post("/login", function(req, res) {
     var userObj = req.body;
